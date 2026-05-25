@@ -1,0 +1,14 @@
+/* rechte Sidebar komplett entfernen */
+[data-testid="sidebarColumn"] {
+    display: none !important;
+}
+
+/* verhindert Layout-Verschiebung */
+main[role="main"] {
+    max-width: none !important;
+}
+
+/* Feed bleibt sauber zentriert */
+div[data-testid="primaryColumn"] {
+    margin: 0 auto !important;
+}
