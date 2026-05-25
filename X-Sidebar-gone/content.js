@@ -1,48 +1,48 @@
-function hideRightSidebar() {
-    const sidebar = document.querySelector('[data-testid="sidebarColumn"]');
-
-    if (sidebar) {
-        sidebar.style.display = "none";
+function waitForTabs(callback) {
+  const observer = new MutationObserver(() => {
+    const tabs = document.querySelectorAll('[role="tab"]');
+    if (tabs.length > 0) {
+      callback(tabs);
     }
+  });
 
-    // Timeline breiter machen
-    const primary = document.querySelector('main[role="main"]');
-
-    if (primary) {
-        primary.style.maxWidth = "1000px";
-        primary.style.margin = "0 auto";
-    }
-}
-
-function switchToFollowing() {
-    const tabs = [...document.querySelectorAll('[role="tab"]')];
-
-    const followingTab = tabs.find(tab =>
-        tab.innerText.trim().toLowerCase() === "following"
-    );
-
-    const forYouSelected = tabs.find(tab =>
-        tab.innerText.trim().toLowerCase() === "for you" &&
-        tab.getAttribute("aria-selected") === "true"
-    );
-
-    if (followingTab && forYouSelected) {
-        followingTab.click();
-    }
-}
-
-function run() {
-    hideRightSidebar();
-    switchToFollowing();
-}
-
-setInterval(run, 1500);
-
-const observer = new MutationObserver(run);
-
-observer.observe(document.body, {
+  observer.observe(document.body, {
     childList: true,
-    subtree: true
-});
+    subtree: true,
+  });
+}
 
-run();
+function forceFollowing(tabs) {
+  const followingTab = [...tabs].find((tab) =>
+    tab.innerText?.toLowerCase().includes("following"),
+  );
+
+  const forYouTab = [...tabs].find((tab) =>
+    tab.innerText?.toLowerCase().includes("for you"),
+  );
+
+  if (followingTab && forYouTab) {
+    const isForYouActive = forYouTab.getAttribute("aria-selected") === "true";
+
+    if (isForYouActive) {
+      followingTab.click();
+    }
+  }
+}
+
+function init() {
+  waitForTabs((tabs) => {
+    forceFollowing(tabs);
+
+    const observer = new MutationObserver(() => {
+      forceFollowing(tabs);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  });
+}
+
+init();
