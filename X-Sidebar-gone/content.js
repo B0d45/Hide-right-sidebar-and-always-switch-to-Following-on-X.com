@@ -1,9 +1,32 @@
-function waitForTabs(callback) {
+let enabled = true;
+
+function applySidebarState() {
+  if (enabled) {
+    document.body.classList.add("xcf-hidden-sidebar");
+  } else {
+    document.body.classList.remove("xcf-hidden-sidebar");
+  }
+}
+
+function forceFollowing() {
+  const tabs = document.querySelectorAll('[role="tab"]');
+
+  const following = [...tabs].find((t) =>
+    t.innerText?.toLowerCase().includes("following"),
+  );
+
+  const forYou = [...tabs].find((t) =>
+    t.innerText?.toLowerCase().includes("for you"),
+  );
+
+  if (following && forYou && forYou.getAttribute("aria-selected") === "true") {
+    following.click();
+  }
+}
+
+function observe() {
   const observer = new MutationObserver(() => {
-    const tabs = document.querySelectorAll('[role="tab"]');
-    if (tabs.length > 0) {
-      callback(tabs);
-    }
+    if (enabled) forceFollowing();
   });
 
   observer.observe(document.body, {
@@ -12,37 +35,40 @@ function waitForTabs(callback) {
   });
 }
 
-function forceFollowing(tabs) {
-  const followingTab = [...tabs].find((tab) =>
-    tab.innerText?.toLowerCase().includes("following"),
-  );
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg?.type === "TOGGLE") {
+    enabled = msg.value;
 
-  const forYouTab = [...tabs].find((tab) =>
-    tab.innerText?.toLowerCase().includes("for you"),
-  );
+    chrome.storage.sync.set({ enabled });
 
-  if (followingTab && forYouTab) {
-    const isForYouActive = forYouTab.getAttribute("aria-selected") === "true";
+    applySidebarState();
 
-    if (isForYouActive) {
-      followingTab.click();
-    }
+    if (enabled) forceFollowing();
+
+    sendResponse({ ok: true });
   }
-}
+});
 
 function init() {
-  waitForTabs((tabs) => {
-    forceFollowing(tabs);
+  chrome.storage.sync.get(["enabled"], (res) => {
+    enabled = res.enabled !== false;
 
-    const observer = new MutationObserver(() => {
-      forceFollowing(tabs);
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+    applySidebarState();
+    observe();
+    forceFollowing();
   });
 }
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "F8") {
+    enabled = !enabled;
+
+    chrome.storage.sync.set({ enabled });
+
+    applySidebarState();
+
+    if (enabled) forceFollowing();
+  }
+});
 
 init();
