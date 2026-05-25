@@ -1,7 +1,7 @@
 const btn = document.getElementById("toggle");
 
 function updateUI(state) {
-  btn.textContent = state ? "Disable sidebar" : "Enable sidebar";
+  btn.textContent = state ? "Enable sidebar" : "Disable sidebar";
 }
 
 chrome.storage.sync.get(["enabled"], (res) => {
